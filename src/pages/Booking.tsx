@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -168,6 +169,9 @@ const Booking = () => {
   if (loading) {
     return (
       <Layout>
+        <Helmet>
+          <title>Booking... | RoomsOnline</title>
+        </Helmet>
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           <Skeleton className="h-8 w-32 mb-6" />
           <div className="grid md:grid-cols-3 gap-8">
@@ -187,6 +191,9 @@ const Booking = () => {
   if (!property) {
     return (
       <Layout>
+        <Helmet>
+          <title>Property Not Found | RoomsOnline</title>
+        </Helmet>
         <div className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="p-6">
@@ -203,6 +210,10 @@ const Booking = () => {
 
   return (
     <Layout>
+      <Helmet>
+        <title>Booking {property.name} | RoomsOnline</title>
+        <meta name="description" content={`Complete your booking for ${property.name}`} />
+      </Helmet>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Back button */}
         <Button
@@ -396,7 +407,7 @@ const Booking = () => {
                     <span>R{cleaningFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-foreground/80">
-                    <span>Service fee (7.5%)</span>
+                    <span>Booking fee (incl. in total)</span>
                     <span>R{serviceFee.toFixed(2)}</span>
                   </div>
                   <div className="border-t border-border pt-4 mt-4">
@@ -424,7 +435,10 @@ const Booking = () => {
       </div>
 
       {/* Mobile fixed bottom bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-lg safe-bottom">
+      <div 
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-lg"
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      >
         <div className="flex items-center justify-between mb-2">
           <div>
             <p className="text-xs text-foreground/70">Total</p>

@@ -41,13 +41,19 @@ const formSchema = z.object({
   checkOut: z.date({
     required_error: "Check-out date is required",
   }),
-  guests: z.number({
-    required_error: "Guests required",
-  }).min(1, "At least 1 guest required").max(12, "Maximum 12 guests"),
+  adults: z.number().min(1, "At least 1 adult required").max(9),
+  children: z.number().min(0).max(8),
+  infants: z.number().min(0).max(4),
   location: z.string().optional(),
+  roomClass: z.string().optional(),
+  promoCode: z.string().max(32).optional(),
+  flexibleDates: z.boolean().optional(),
 }).refine((data) => data.checkOut > data.checkIn, {
   message: "Check-out must be after check-in",
   path: ["checkOut"],
+}).refine((data) => (data.adults + data.children + data.infants) <= 12, {
+  message: "Maximum 12 guests total",
+  path: ["adults"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -62,17 +68,29 @@ const Home = () => {
     defaultValues: {
       checkIn: addDays(new Date(), 1),
       checkOut: addDays(new Date(), 8),
-      guests: 2,
+      adults: 2,
+      children: 0,
+      infants: 0,
       location: "",
+      roomClass: "standard",
+      promoCode: "",
+      flexibleDates: false,
     },
   });
 
   const onSubmit = (data: FormValues) => {
+    const totalGuests = data.adults + data.children + data.infants;
     const params = new URLSearchParams({
       checkIn: format(data.checkIn, "yyyy-MM-dd"),
       checkOut: format(data.checkOut, "yyyy-MM-dd"),
-      guests: data.guests.toString(),
+      guests: totalGuests.toString(),
+      adults: data.adults.toString(),
+      children: data.children.toString(),
+      infants: data.infants.toString(),
       ...(data.location && { location: data.location }),
+      ...(data.roomClass && { roomClass: data.roomClass }),
+      ...(data.promoCode && { promoCode: data.promoCode }),
+      ...(data.flexibleDates && { flexibleDates: data.flexibleDates.toString() }),
     });
     navigate(`/search?${params.toString()}`);
   };

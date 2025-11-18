@@ -82,7 +82,7 @@ const Home = () => {
       </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
         <div className="container mx-auto px-4 py-12">
-        <div className="max-w-2xl mx-auto">
+          <div className="max-w-2xl mx-auto">
           <h1 className="text-4xl font-bold text-center mb-8 text-foreground">
             Find Your Perfect Stay in South Africa
           </h1>
@@ -233,6 +233,7 @@ const Home = () => {
             </Form>
           </div>
         </div>
+      </div>
       </div>
     </>
   );

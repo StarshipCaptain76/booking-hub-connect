@@ -7,15 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Hotel, CheckCircle, Search as SearchIcon, Users } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Hotel, CheckCircle, Search as SearchIcon, Users, AlertCircle } from "lucide-react";
 import mockProperties, { Property } from "@/data/mockProperties";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Search = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"low-high" | "high-low">("low-high");
 
   useEffect(() => {
@@ -23,6 +26,7 @@ const Search = () => {
     const checkIn = searchParams.get("checkIn");
     const checkOut = searchParams.get("checkOut");
     const guests = searchParams.get("guests");
+    const location = searchParams.get("location");
 
     if (!checkIn || !checkOut || !guests) {
       toast.error("Please enter search criteria");
@@ -30,14 +34,44 @@ const Search = () => {
       return;
     }
 
-    // Simulate loading
-    setTimeout(() => {
-      filterProperties();
-      setLoading(false);
-    }, 500);
+    const fetchAvailability = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Call the edge function
+        const { data, error: functionError } = await supabase.functions.invoke('availability', {
+          body: {
+            checkIn,
+            checkOut,
+            guests: parseInt(guests),
+            location: location || undefined
+          }
+        });
+
+        if (functionError) throw functionError;
+
+        if (data?.success) {
+          console.log(`Loaded ${data.totalCount} properties (NightsBridge: ${data.breakdown.nightsbridge}, Checkfront: ${data.breakdown.checkfront})`);
+          setProperties(data.properties);
+        } else {
+          throw new Error(data?.error || 'Failed to fetch availability');
+        }
+      } catch (err) {
+        console.error('Error fetching availability:', err);
+        setError('Unable to fetch live availability. Using demo data.');
+        
+        // Fallback to local mock data
+        fallbackFilterProperties();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAvailability();
   }, [searchParams, navigate]);
 
-  const filterProperties = () => {
+  const fallbackFilterProperties = () => {
     const checkIn = searchParams.get("checkIn");
     const checkOut = searchParams.get("checkOut");
     const guests = parseInt(searchParams.get("guests") || "1");
@@ -118,6 +152,15 @@ const Search = () => {
         <div className="mb-8">
           <SearchForm />
         </div>
+
+        {error && (
+          <Alert className="mb-6 border-[#FF88D1] bg-[#FF88D1]/5">
+            <AlertCircle className="h-4 w-4 text-[#FF88D1]" />
+            <AlertDescription className="text-[#545454]">
+              {error} Connect APIs for real-time availability.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
